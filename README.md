@@ -13,4 +13,4 @@ Intracranial aneurysms affect around 3% of the global population. Unfortunately,
  Project aims to detect and precisely locate intracranial aneurysms across various types of medical images, including CTA, MRA, and T1 post-contrast and T2-weighted MRI. The challenge includes real clinical variation, with data from different institutions, scanners and imaging protocols that will test model’s ability to generalize.
  
  # Evaluation
- <img width="450" height="76" alt="Evaluation calculation" src="https://github.com/user-attachments/assets/784a3a20-7205-4c02-9dd5-8000bf58529b" />
+ <img width="450" height="76" alt="Evaluation calculation" src="https://github.com/user-attachments/assets/784a3a20-7205-4c02-9dd5-8000bf58529b" /> 
