@@ -1,5 +1,5 @@
 # RSNA-Intracranial-Aneurysm-Detection
-<img src="https://github.com/Bempong-Sylvester-Obese/RSNA-Intracranial-Aneurysm-Detection/blob/main/aneurysm_trace-ezgif.com-optimize.gif?raw=true" alt="Aneurysm Detection Demo" width="1000" height="500" loop />
+<img src="https://github.com/Bempong-Sylvester-Obese/RSNA-Intracranial-Aneurysm-Detection/blob/main/aneurysm_trace-ezgif.com-optimize.gif?raw=true" alt="Aneurysm Detection Demo" width="1000" height="500" />
 <img width="1000" height="500" alt="image" src="https://github.com/user-attachments/assets/0ded079f-a8b8-4dad-bcb0-ba29c105d277" />
 
 # Overview
