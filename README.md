@@ -14,3 +14,18 @@ Intracranial aneurysms affect around 3% of the global population. Unfortunately,
  
  # Evaluation
  <img width="450" height="76" alt="Evaluation calculation" src="https://github.com/user-attachments/assets/784a3a20-7205-4c02-9dd5-8000bf58529b" /> 
+
+# Labels in /data/ folder
+1. ACA - Anterior Communicating Artery
+2. BT - Basilar Tip
+3. LACA - Left Anterior Cerebral Artery
+4. LIICA - Left Infraclinoid Internal Carotid Artery
+5. LMCA - Left Middle Cerebral Artery
+6. LPCA - Left Posterior Communicating Artery
+7. LSICA - Left Supraclinoid Internal Carotid Artery
+8. OPC - Other Posterior Circulation
+9. RACA - Right Anterior Cerebral Artery
+10. RIICA - Right Infraclinoid Internal Carotid Artery
+11. RMCA -  Right Middle Cerebral Artery
+12. RPCA - Right Posterior Communicating Artery
+13. RSICA - Right Supraclinoid Internal Carotid Artery
