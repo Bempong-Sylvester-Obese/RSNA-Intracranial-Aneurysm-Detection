@@ -15,7 +15,7 @@ Intracranial aneurysms affect around 3% of the global population. Unfortunately,
  # Evaluation
  <img width="450" height="76" alt="Evaluation calculation" src="https://github.com/user-attachments/assets/784a3a20-7205-4c02-9dd5-8000bf58529b" /> 
 
-# Labels in /data/ folder
+# Labels in data folder
 1. ACA - Anterior Communicating Artery
 2. BT - Basilar Tip
 3. LACA - Left Anterior Cerebral Artery
