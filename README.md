@@ -89,6 +89,19 @@ rsna-aneurysm metric-self-check
 
 Training writes **checkpoints** under `checkpoints/` and **TensorBoard** logs under `runs/` (`tensorboard --logdir runs`).
 
+### Apple Silicon (M1/M2/M3)
+
+Training prefers **MPS** when available (`torch.backends.mps.is_available()`), then CUDA, then CPU. DataLoader `num_workers` defaults to **0** on macOS to avoid multiprocessing issues. If an op is unsupported on MPS, set `PYTORCH_ENABLE_MPS_FALLBACK=1` before running.
+
+**Minimal DICOM folders for a smoke run** (not real imaging—only for pipeline checks):
+
+```bash
+python scripts/seed_minimal_series.py --train-csv Data/train.csv --series-dir Data/series \
+  --debug-samples 8 --seed 42
+rsna-aneurysm train --train-csv Data/train.csv --series-dir Data/series --epochs 1 --fold 0 \
+  --strict-paths --debug-samples 8 --batch-size 2 --seed 42
+```
+
 ### Project layout
 
 - `src/rsna_aneurysm/` — library: data loading, 3D CNN, multilabel loss, competition metric, training loop  

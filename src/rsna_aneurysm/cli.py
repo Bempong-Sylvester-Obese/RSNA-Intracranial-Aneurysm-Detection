@@ -15,6 +15,7 @@ from torch.utils.data import DataLoader
 from rsna_aneurysm.config import TrainConfig
 from rsna_aneurysm.data.dataset import AneurysmVolumeDataset
 from rsna_aneurysm.data.dicom import DICOMVolumeProcessor
+from rsna_aneurysm.device import pick_device
 from rsna_aneurysm.labels import ID_COL, LABEL_COLUMNS, NUM_LABELS, PRESENCE_COL
 from rsna_aneurysm.metrics.competition import score as competition_score
 from rsna_aneurysm.models.aneurysm_net import EfficientAneurysmNet
@@ -115,7 +116,7 @@ def eval_model(
     tr = train_df.iloc[tr_idx].reset_index(drop=True)
     va = train_df.iloc[va_idx].reset_index(drop=True)
 
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    device = pick_device()
     train_loader, val_loader = _build_loaders(tr, va, cfg, device)
 
     ckpt = _load_checkpoint(checkpoint, device)
@@ -146,7 +147,7 @@ def predict(
     test_df = pd.read_csv(test_csv)
     for c in LABEL_COLUMNS:
         test_df[c] = 0
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    device = pick_device()
     processor = DICOMVolumeProcessor(target_size=cfg.target_size)
     ds = AneurysmVolumeDataset(
         test_df,
@@ -154,7 +155,6 @@ def predict(
         processor,
         cfg.target_size,
         mode="val",
-        strict_paths=False,
     )
     loader = DataLoader(ds, batch_size=cfg.batch_size, shuffle=False, num_workers=0)
     ckpt = _load_checkpoint(checkpoint, device)

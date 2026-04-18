@@ -20,8 +20,13 @@ from torch.utils.data import DataLoader, WeightedRandomSampler
 from torch.utils.tensorboard import SummaryWriter
 from tqdm import tqdm
 
-from rsna_aneurysm.data.dataset import AneurysmVolumeDataset, SyntheticVolumeDataset
+from rsna_aneurysm.data.dataset import (
+    AneurysmVolumeDataset,
+    SyntheticVolumeDataset,
+    filter_dataframe_with_existing_series,
+)
 from rsna_aneurysm.data.dicom import DICOMVolumeProcessor
+from rsna_aneurysm.device import pick_device, should_pin_memory
 from rsna_aneurysm.labels import ID_COL, LABEL_COLUMNS, NUM_LABELS, PRESENCE_COL
 from rsna_aneurysm.metrics.competition import weighted_multilabel_auc
 from rsna_aneurysm.models.aneurysm_net import EfficientAneurysmNet
@@ -36,6 +41,8 @@ def set_seed(seed: int) -> None:
     torch.manual_seed(seed)
     if torch.cuda.is_available():
         torch.cuda.manual_seed_all(seed)
+    if hasattr(torch.backends, "mps") and torch.backends.mps.is_available():
+        torch.mps.manual_seed(seed)
 
 
 def _build_loaders(
@@ -59,7 +66,7 @@ def _build_loaders(
             NUM_LABELS,
             seed=cfg.seed + 1,
         )
-        pin = torch.cuda.is_available() and device.type == "cuda"
+        pin = should_pin_memory(device)
         train_loader = DataLoader(
             train_ds,
             batch_size=cfg.batch_size,
@@ -76,21 +83,29 @@ def _build_loaders(
         )
         return train_loader, val_loader
 
+    sdir = str(cfg.series_dir)
+    if cfg.strict_paths:
+        train_df = filter_dataframe_with_existing_series(train_df, sdir, label="train")
+        val_df = filter_dataframe_with_existing_series(val_df, sdir, label="val")
+        if len(train_df) == 0 or len(val_df) == 0:
+            raise ValueError(
+                "strict_paths: no rows left after requiring existing series folders under "
+                f"{sdir}. Run scripts/seed_minimal_series.py or add DICOM data."
+            )
+
     train_ds = AneurysmVolumeDataset(
         train_df,
-        str(cfg.series_dir),
+        sdir,
         processor,
         cfg.target_size,
         mode="train",
-        strict_paths=cfg.strict_paths,
     )
     val_ds = AneurysmVolumeDataset(
         val_df,
-        str(cfg.series_dir),
+        sdir,
         processor,
         cfg.target_size,
         mode="val",
-        strict_paths=cfg.strict_paths,
     )
 
     targets = train_df[PRESENCE_COL].astype(float).tolist()
@@ -102,7 +117,7 @@ def _build_loaders(
         weights = [len(targets) / (len(class_counts) * class_counts[t]) for t in targets]
     sampler = WeightedRandomSampler(weights, len(weights), replacement=True)
 
-    pin = torch.cuda.is_available() and device.type == "cuda"
+    pin = should_pin_memory(device)
 
     train_loader = DataLoader(
         train_ds,
@@ -237,7 +252,7 @@ def run_training(cfg: Any) -> list[dict[str, Any]]:
         loc = pd.read_csv(cfg.localizers_csv)
         logger.info("Optional localizers CSV loaded: %s rows", len(loc))
 
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    device = pick_device()
     logger.info("Device: %s", device)
 
     if cfg.synthetic:
@@ -262,8 +277,22 @@ def run_training(cfg: Any) -> list[dict[str, Any]]:
             [pos.sample(n=n, random_state=cfg.seed), neg.sample(n=n, random_state=cfg.seed)]
         ).reset_index(drop=True)
 
-    skf = StratifiedKFold(n_splits=cfg.n_folds, shuffle=True, random_state=cfg.seed)
     y_strat = train_df[PRESENCE_COL].values
+    min_class = int(train_df[PRESENCE_COL].value_counts().min())
+    if min_class < 2:
+        raise ValueError(
+            "Stratified K-fold needs at least 2 samples per class; "
+            "reduce --debug-samples or use more data."
+        )
+    n_splits_eff = min(cfg.n_folds, min_class)
+    if n_splits_eff < cfg.n_folds:
+        logger.info(
+            "Using n_splits=%s (min class count=%s, requested %s)",
+            n_splits_eff,
+            min_class,
+            cfg.n_folds,
+        )
+    skf = StratifiedKFold(n_splits=n_splits_eff, shuffle=True, random_state=cfg.seed)
     fold_results: list[dict[str, Any]] = []
 
     writer: SummaryWriter | None = None

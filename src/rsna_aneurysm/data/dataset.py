@@ -16,6 +16,22 @@ from rsna_aneurysm.labels import ID_COL, LABEL_COLUMNS
 logger = logging.getLogger(__name__)
 
 
+def filter_dataframe_with_existing_series(
+    df: pd.DataFrame, series_dir: str, *, label: str = "train"
+) -> pd.DataFrame:
+    """Keep rows whose SeriesInstanceUID subfolder exists under series_dir."""
+    before = len(df)
+    mask = df[ID_COL].apply(lambda uid: os.path.isdir(os.path.join(series_dir, str(uid))))
+    out = df.loc[mask].reset_index(drop=True)
+    logger.info(
+        "strict_paths [%s]: kept %s / %s rows with existing series dirs",
+        label,
+        len(out),
+        before,
+    )
+    return out
+
+
 class AneurysmVolumeDataset(Dataset):
     """Multi-label targets aligned with `LABEL_COLUMNS`."""
 
@@ -27,14 +43,12 @@ class AneurysmVolumeDataset(Dataset):
         target_size: tuple[int, int, int],
         *,
         mode: str = "train",
-        strict_paths: bool = False,
     ) -> None:
         self.df = df.copy().reset_index(drop=True)
         self.series_dir = series_dir
         self.processor = processor
         self.target_size = target_size
         self.mode = mode
-        self.strict_paths = strict_paths
 
         missing = [c for c in LABEL_COLUMNS if c not in self.df.columns]
         if missing:
@@ -43,25 +57,13 @@ class AneurysmVolumeDataset(Dataset):
         if ID_COL not in self.df.columns:
             raise ValueError(f"Missing id column: {ID_COL}")
 
-        if strict_paths:
-            before = len(self.df)
-            mask = self.df[ID_COL].apply(
-                lambda uid: os.path.isdir(os.path.join(series_dir, str(uid)))
-            )
-            self.df = self.df.loc[mask].reset_index(drop=True)
-            logger.info(
-                "strict_paths: kept %s / %s rows with existing series dirs",
-                len(self.df),
-                before,
-            )
-
     def __len__(self) -> int:
         return len(self.df)
 
     def __getitem__(self, idx: int) -> dict:
         row = self.df.iloc[idx]
         series_id = str(row[ID_COL])
-        labels = row[list(LABEL_COLUMNS)].astype(np.float32).values
+        labels = row[list(LABEL_COLUMNS)].astype(np.float32).values.copy()
 
         series_path = os.path.join(self.series_dir, series_id)
         volume = self.processor.load_dicom_series(series_path)

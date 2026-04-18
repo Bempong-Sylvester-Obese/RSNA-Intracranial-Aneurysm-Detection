@@ -35,6 +35,9 @@ Thumbs.db
 .vscode/
 *.swp
 
+# Local research PDFs (large; keep out of git unless using Git LFS)
+Research/
+
 # Local data (keep CSV samples in Data/ if tracked; ignore large volumes)
 Data/series/
 data/series/
