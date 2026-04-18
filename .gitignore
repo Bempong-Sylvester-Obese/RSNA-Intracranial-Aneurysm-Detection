@@ -1,0 +1,48 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.Python
+*.egg-info/
+.eggs/
+dist/
+build/
+*.egg
+.venv/
+venv/
+.python-version
+env/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# ML artifacts
+checkpoints/
+runs/
+wandb/
+mlruns/
+*.pth
+*.pt
+evaluation_results/
+submission*.csv
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.idea/
+.vscode/
+*.swp
+
+# Local data (keep CSV samples in Data/ if tracked; ignore large volumes)
+Data/series/
+data/series/
+*.nii
+*.nii.gz
+*.dcm
+
+# pytest
+.pytest_cache/
+.coverage
+htmlcov/
