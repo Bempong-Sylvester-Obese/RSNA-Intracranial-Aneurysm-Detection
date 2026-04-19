@@ -1,15 +1,11 @@
 #!/usr/bin/env python3
 """Write minimal DICOM slices under Data/series/<SeriesInstanceUID>/ for local training smoke tests.
-
 Does not replace real RSNA volumes; use after downloading competition data or for pipeline checks.
 """
-
 from __future__ import annotations
-
 import argparse
 import sys
 from pathlib import Path
-
 import numpy as np
 import pandas as pd
 import pydicom

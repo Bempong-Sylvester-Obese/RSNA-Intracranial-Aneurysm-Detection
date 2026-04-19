@@ -1,17 +1,14 @@
 """Command-line interface for training, evaluation, and submission export."""
 
 from __future__ import annotations
-
 import logging
 from pathlib import Path
 from typing import Optional
-
 import pandas as pd
 import torch
 import typer
 from rich.logging import RichHandler
 from torch.utils.data import DataLoader
-
 from rsna_aneurysm.config import TrainConfig
 from rsna_aneurysm.data.dataset import AneurysmVolumeDataset
 from rsna_aneurysm.data.dicom import DICOMVolumeProcessor

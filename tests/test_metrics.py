@@ -3,7 +3,6 @@
 import numpy as np
 import pandas as pd
 import pytest
-
 from rsna_aneurysm.metrics import ParticipantVisibleError, score, weighted_multilabel_auc
 
 

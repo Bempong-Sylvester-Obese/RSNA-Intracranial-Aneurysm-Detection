@@ -1,15 +1,12 @@
 """PyTorch datasets for volume tensors and multi-label targets."""
 
 from __future__ import annotations
-
 import logging
 import os
-
 import numpy as np
 import pandas as pd
 import torch
 from torch.utils.data import Dataset
-
 from rsna_aneurysm.data.dicom import DICOMVolumeProcessor
 from rsna_aneurysm.labels import ID_COL, LABEL_COLUMNS
 

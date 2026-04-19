@@ -1,7 +1,6 @@
 """3D CNN backbone for multilabel aneurysm prediction."""
 
 from __future__ import annotations
-
 import torch.nn as nn
 
 

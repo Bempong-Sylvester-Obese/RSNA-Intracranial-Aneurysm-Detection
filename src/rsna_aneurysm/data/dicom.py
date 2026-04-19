@@ -1,11 +1,9 @@
 """Load and preprocess DICOM series into fixed-size volumes."""
 
 from __future__ import annotations
-
 import gc
 import logging
 import os
-
 import cv2
 import numpy as np
 import pydicom

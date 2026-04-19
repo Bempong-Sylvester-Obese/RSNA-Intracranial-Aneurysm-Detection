@@ -1,9 +1,7 @@
 """Weighted columnwise macro-averaged AUCROC"""
 
 from __future__ import annotations
-
 from typing import List, Optional
-
 import numpy as np
 import pandas as pd
 import pandas.api.types
