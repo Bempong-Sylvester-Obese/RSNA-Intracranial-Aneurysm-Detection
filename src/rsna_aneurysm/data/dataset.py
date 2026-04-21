@@ -1,16 +1,52 @@
 """PyTorch datasets for volume tensors and multi-label targets."""
 
 from __future__ import annotations
+
 import logging
 import os
+from pathlib import Path
+
 import numpy as np
 import pandas as pd
 import torch
 from torch.utils.data import Dataset
+
 from rsna_aneurysm.data.dicom import DICOMVolumeProcessor
 from rsna_aneurysm.labels import ID_COL, LABEL_COLUMNS
 
 logger = logging.getLogger(__name__)
+
+
+def resolve_series_path(series_dir: str | Path, series_id: str) -> Path:
+    """Resolve a series path and ensure it stays under the configured root."""
+    root = Path(series_dir).resolve()
+    series_id = str(series_id).strip()
+    if not series_id:
+        raise ValueError("SeriesInstanceUID must be non-empty.")
+
+    if series_id in {".", ".."}:
+        raise ValueError(f"Invalid SeriesInstanceUID '{series_id}'.")
+
+    if os.path.isabs(series_id):
+        raise ValueError(f"Invalid SeriesInstanceUID '{series_id}': absolute paths are forbidden.")
+
+    separators = {"/", "\\", os.sep}
+    if os.altsep:
+        separators.add(os.altsep)
+    if any(sep in series_id for sep in separators):
+        raise ValueError(
+            f"Invalid SeriesInstanceUID '{series_id}': path separators are forbidden."
+        )
+
+    candidate = (root / series_id).resolve()
+    try:
+        candidate.relative_to(root)
+    except ValueError as exc:
+        raise ValueError(
+            f"Invalid SeriesInstanceUID '{series_id}': path escapes the series directory."
+        ) from exc
+
+    return candidate
 
 
 def filter_dataframe_with_existing_series(
@@ -18,7 +54,15 @@ def filter_dataframe_with_existing_series(
 ) -> pd.DataFrame:
     """Keep rows whose SeriesInstanceUID subfolder exists under series_dir."""
     before = len(df)
-    mask = df[ID_COL].apply(lambda uid: os.path.isdir(os.path.join(series_dir, str(uid))))
+
+    def _exists(uid: object) -> bool:
+        try:
+            return resolve_series_path(series_dir, str(uid)).is_dir()
+        except ValueError:
+            logger.warning("strict_paths [%s]: dropping unsafe SeriesInstanceUID '%s'", label, uid)
+            return False
+
+    mask = df[ID_COL].apply(_exists)
     out = df.loc[mask].reset_index(drop=True)
     logger.info(
         "strict_paths [%s]: kept %s / %s rows with existing series dirs",
@@ -62,8 +106,8 @@ class AneurysmVolumeDataset(Dataset):
         series_id = str(row[ID_COL])
         labels = row[list(LABEL_COLUMNS)].astype(np.float32).values.copy()
 
-        series_path = os.path.join(self.series_dir, series_id)
-        volume = self.processor.load_dicom_series(series_path)
+        series_path = resolve_series_path(self.series_dir, series_id)
+        volume = self.processor.load_dicom_series(os.fspath(series_path))
 
         volume_t = torch.from_numpy(volume).float().unsqueeze(0)
         label_t = torch.from_numpy(labels).float()

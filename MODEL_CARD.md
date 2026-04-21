@@ -28,6 +28,12 @@ Research and benchmarking on the RSNA-style tabular labels and volumetric imagin
 - Use imaging data only under the license or competition rules you accepted.
 - Avoid deploying outputs as diagnostic advice; this is experimental software.
 
+## Security notes (research tooling)
+
+- Treat **checkpoints** and **local DICOM folders** as trusted inputs from your environment. The CLI loads checkpoints with `weights_only=True` when available and validates the expected dict shape, but you should still only use artifacts you produced or fully trust.
+- Treat **CSVs** as trusted metadata; the pipeline validates required columns but is not a general-purpose spreadsheet sanitizer.
+- `SeriesInstanceUID` values are constrained to safe subpaths under your configured series root (see `resolve_series_path`).
+
 ## How to reproduce training
 
 ```bash

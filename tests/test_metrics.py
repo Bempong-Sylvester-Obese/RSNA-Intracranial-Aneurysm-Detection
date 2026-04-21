@@ -3,6 +3,7 @@
 import numpy as np
 import pandas as pd
 import pytest
+
 from rsna_aneurysm.metrics import ParticipantVisibleError, score, weighted_multilabel_auc
 
 
@@ -37,4 +38,11 @@ def test_invalid_submission_columns():
     solution = pd.DataFrame({"id": [1], "a": [1]})
     submission = pd.DataFrame({"id": [1], "a": ["x"]})
     with pytest.raises(ParticipantVisibleError):
+        score(solution, submission, "id")
+
+
+def test_mismatched_submission_column_names():
+    solution = pd.DataFrame({"id": [1, 2], "a": [1, 0], "b": [0, 1]})
+    submission = pd.DataFrame({"id": [1, 2], "a": [0.9, 0.2], "c": [0.1, 0.8]})
+    with pytest.raises(ParticipantVisibleError, match="exactly match"):
         score(solution, submission, "id")

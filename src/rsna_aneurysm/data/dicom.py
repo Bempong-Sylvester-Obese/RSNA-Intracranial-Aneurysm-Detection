@@ -1,9 +1,11 @@
 """Load and preprocess DICOM series into fixed-size volumes."""
 
 from __future__ import annotations
+
 import gc
 import logging
 import os
+
 import cv2
 import numpy as np
 import pydicom
@@ -20,6 +22,7 @@ class DICOMVolumeProcessor:
         target_size: tuple[int, int, int] = (16, 128, 128),
         hu_window: tuple[float, float] = (-1000, 1000),
         max_cache_size: int = 50,
+        max_file_size_bytes: int = 32 * 1024 * 1024,
     ) -> None:
         self.target_size = target_size
         self.max_slices = target_size[0]
@@ -27,6 +30,7 @@ class DICOMVolumeProcessor:
         self.stats = {"processed": 0, "failed": 0, "dummy": 0}
         self.cache: dict[str, np.ndarray] = {}
         self.max_cache_size = max_cache_size
+        self.max_file_size_bytes = max_file_size_bytes
 
     def load_dicom_series(self, series_path: str) -> np.ndarray:
         try:
@@ -38,9 +42,7 @@ class DICOMVolumeProcessor:
                 logger.warning("Series path does not exist: %s", series_path)
                 return self._dummy_volume()
 
-            dicom_files = [
-                f for f in os.listdir(series_path) if f.lower().endswith(".dcm")
-            ][: self.max_slices]
+            dicom_files = self._candidate_dicom_files(series_path)
             if not dicom_files:
                 logger.warning("No DICOM files in: %s", series_path)
                 return self._dummy_volume()
@@ -50,8 +52,7 @@ class DICOMVolumeProcessor:
 
             for file_name in dicom_files:
                 try:
-                    file_path = os.path.join(series_path, file_name)
-                    ds = pydicom.dcmread(file_path, force=True)
+                    ds = pydicom.dcmread(file_name, force=False)
                     if hasattr(ds, "pixel_array"):
                         arr = ds.pixel_array.astype(np.float32)
                         if arr.ndim == 2:
@@ -79,6 +80,30 @@ class DICOMVolumeProcessor:
             logger.error("Error processing %s: %s", series_path, e)
             self.stats["failed"] += 1
             return self._dummy_volume()
+
+    def _candidate_dicom_files(self, series_path: str) -> list[str]:
+        files: list[str] = []
+        for entry in sorted(os.scandir(series_path), key=lambda item: item.name):
+            if not entry.is_file(follow_symlinks=False):
+                continue
+            if not entry.name.lower().endswith(".dcm"):
+                continue
+
+            size = entry.stat(follow_symlinks=False).st_size
+            if size > self.max_file_size_bytes:
+                logger.warning(
+                    "Skipping oversized DICOM %s (%s bytes > %s)",
+                    entry.path,
+                    size,
+                    self.max_file_size_bytes,
+                )
+                continue
+
+            files.append(entry.path)
+            if len(files) >= self.max_slices:
+                break
+
+        return files
 
     def _preprocess_slice(self, arr: np.ndarray, target_shape: tuple[int, int]) -> np.ndarray:
         if arr.shape != target_shape:

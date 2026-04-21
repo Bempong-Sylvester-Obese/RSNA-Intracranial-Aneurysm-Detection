@@ -1,14 +1,17 @@
 """Command-line interface for training, evaluation, and submission export."""
 
 from __future__ import annotations
+
 import logging
 from pathlib import Path
 from typing import Optional
+
 import pandas as pd
 import torch
 import typer
 from rich.logging import RichHandler
 from torch.utils.data import DataLoader
+
 from rsna_aneurysm.config import TrainConfig
 from rsna_aneurysm.data.dataset import AneurysmVolumeDataset
 from rsna_aneurysm.data.dicom import DICOMVolumeProcessor
@@ -27,11 +30,23 @@ app = typer.Typer(no_args_is_help=True, add_completion=False)
 
 
 def _load_checkpoint(path: Path, device: torch.device):
-    """Load full checkpoint dict (PyTorch 2.6+ defaults weights_only=True)."""
+    """Load a checkpoint using PyTorch's safer weights-only loader when available."""
     try:
-        return torch.load(path, map_location=device, weights_only=False)
-    except TypeError:
-        return torch.load(path, map_location=device)
+        checkpoint = torch.load(path, map_location=device, weights_only=True)
+    except TypeError as exc:
+        raise RuntimeError(
+            "This PyTorch version does not support safe weights-only checkpoint loading. "
+            "Upgrade PyTorch to load checkpoints securely."
+        ) from exc
+    except Exception as exc:
+        raise RuntimeError(f"Failed to load checkpoint '{path}': {exc}") from exc
+
+    if not isinstance(checkpoint, dict) or "model_state_dict" not in checkpoint:
+        raise RuntimeError(
+            f"Checkpoint '{path}' is missing the required 'model_state_dict' entry."
+        )
+
+    return checkpoint
 
 
 def _setup_logging(verbose: bool) -> None:

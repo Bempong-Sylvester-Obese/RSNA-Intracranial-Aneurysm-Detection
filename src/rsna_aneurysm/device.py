@@ -1,6 +1,7 @@
 """Pick best available PyTorch device: CUDA, MPS (Apple Silicon), or CPU."""
 
 from __future__ import annotations
+
 import torch
 
 

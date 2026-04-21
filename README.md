@@ -19,6 +19,17 @@ This project aims to detect and precisely locate intracranial aneurysms across v
 
 **This software is for research and education only.** It is not a medical device and must not be used for clinical diagnosis, treatment, or any decision affecting patient care. Always follow institutional policies and applicable regulations when handling medical imaging data.
 
+## Security and trust boundaries
+
+This repo assumes you control the machine and the datasets you point the CLI at.
+
+- **Checkpoints (`*.pt`) are treated as trusted artifacts.** The CLI loads them with PyTorch `weights_only=True` when supported, and expects a dict containing `model_state_dict`. Do not load checkpoints from untrusted sources.
+- **CSV inputs are treated as trusted tabular metadata.** The training pipeline validates label columns, but it does not attempt to sanitize arbitrary spreadsheet content beyond what is needed for training.
+- **DICOM series directories are treated as trusted local imaging.** The loader bounds per-file size and skips obvious parse failures, but parsing medical images can still be CPU/memory intensive; only point `Data/series/` at data you trust.
+- **Path safety for `SeriesInstanceUID` values:** UIDs must resolve to a single immediate child directory under your configured `--series-dir` (no `..`, separators, or absolute paths).
+
+CI runs **Ruff**, **Bandit**, **pip-audit**, and **pytest** to catch common issues early, but this is not a substitute for your own threat modeling in regulated environments.
+
 ## Data layout
 
 | Path | Purpose |
@@ -105,7 +116,7 @@ rsna-aneurysm train --train-csv Data/train.csv --series-dir Data/series --epochs
 ### Project layout
 
 - `src/rsna_aneurysm/` — library: data loading, 3D CNN, multilabel loss, competition metric, training loop  
-- `tests/` — metric unit tests and synthetic training smoke test  
+- `tests/` — metric unit tests, synthetic training smoke test, and security-focused IO tests  
 - `Notebooks/` — exploratory EDA and metric reference notebook  
 - `AneurysmNet.ipynb` — original Kaggle-oriented notebook (superseded by the package for reproducible runs)
 

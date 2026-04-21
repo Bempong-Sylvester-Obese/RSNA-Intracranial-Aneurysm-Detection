@@ -12,6 +12,7 @@ build/
 venv/
 .python-version
 env/
+.venv312-ci/
 
 # Jupyter
 .ipynb_checkpoints/
@@ -49,3 +50,10 @@ data/series/
 .pytest_cache/
 .coverage
 htmlcov/
+
+# Webapp
+webapp/backend/storage/
+webapp/frontend/node_modules/
+webapp/frontend/dist/
+
+

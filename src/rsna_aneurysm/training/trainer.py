@@ -1,11 +1,13 @@
 """Training loop, validation, and competition metric on held-out fold."""
 from __future__ import annotations
+
 import json
 import logging
 import random
 from collections import Counter
 from pathlib import Path
 from typing import Any
+
 import numpy as np
 import pandas as pd
 import torch
@@ -16,6 +18,7 @@ from sklearn.model_selection import StratifiedKFold
 from torch.utils.data import DataLoader, WeightedRandomSampler
 from torch.utils.tensorboard import SummaryWriter
 from tqdm import tqdm
+
 from rsna_aneurysm.data.dataset import (
     AneurysmVolumeDataset,
     SyntheticVolumeDataset,
