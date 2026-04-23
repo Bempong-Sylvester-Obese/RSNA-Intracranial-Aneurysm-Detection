@@ -4,7 +4,7 @@ This web application is **for research and education only**. It is **not** a med
 
 ## What it does
 
-- Upload a DICOM series (`.zip` or multiple `.dcm` files).
+- Upload a DICOM series: a single `.zip`, a **folder** of `.dcm` files (Chromium / Safari “Choose DICOM folder”), a multi-file selection, or drag-and-drop.
 - Browse slices in a Cornerstone-based stack viewer (PNG tiles from the API).
 - Run the bundled `EfficientAneurysmNet` checkpoint (optional) to view per-vessel probabilities and toggle Grad-CAM overlays by vessel.
 
