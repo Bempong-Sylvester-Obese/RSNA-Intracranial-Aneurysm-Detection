@@ -26,5 +26,11 @@ jobs:
       - name: Ruff
         run: ruff check src tests
 
+      - name: Bandit
+        run: bandit -q -r src
+
+      - name: pip-audit
+        run: pip-audit --progress-spinner off --desc on
+
       - name: Pytest
         run: pytest tests/ -v --tb=short

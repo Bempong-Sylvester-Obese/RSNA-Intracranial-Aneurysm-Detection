@@ -1,4 +1,4 @@
-"""Weighted columnwise macro-averaged AUCROC (RSNA-style metric)."""
+"""Weighted columnwise macro-averaged AUCROC"""
 
 from __future__ import annotations
 
@@ -23,6 +23,11 @@ def score(
     """Compute weighted macro-average multilabel AUCROC."""
     solution = solution.copy()
     submission = submission.copy()
+    if row_id_column_name not in solution.columns or row_id_column_name not in submission.columns:
+        raise ParticipantVisibleError(
+            f"Both solution and submission must include '{row_id_column_name}'."
+        )
+
     del solution[row_id_column_name]
     del submission[row_id_column_name]
 
@@ -32,6 +37,11 @@ def score(
 
     if len(solution.columns) != len(submission.columns):
         raise ParticipantVisibleError("Submission must have predictions for every class.")
+
+    if list(solution.columns) != list(submission.columns):
+        raise ParticipantVisibleError(
+            "Submission columns must exactly match solution columns in name and order."
+        )
 
     return float(
         weighted_multilabel_auc(solution.values, submission.values, class_weights)

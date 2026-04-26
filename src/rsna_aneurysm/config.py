@@ -3,8 +3,14 @@
 from __future__ import annotations
 
 import os
+import sys
 from dataclasses import dataclass, field
 from pathlib import Path
+
+
+def _default_num_workers() -> int:
+    """macOS DataLoader workers often cause hangs; use 0 unless overridden."""
+    return 0 if sys.platform == "darwin" else 2
 
 
 def _env_path(key: str, default: str) -> Path:
@@ -28,7 +34,7 @@ class TrainConfig:
     n_folds: int = 5
     current_fold: int = 0
     seed: int = 42
-    num_workers: int = 2
+    num_workers: int = field(default_factory=_default_num_workers)
     strict_paths: bool = False
     debug_samples: int | None = None
     checkpoint_dir: Path = field(default_factory=lambda: Path("checkpoints"))
